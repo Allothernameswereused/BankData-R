@@ -1,0 +1,160 @@
+---
+title: "Assignment 2 - Big Data Analytics for Business"
+output:
+  html_document:
+    df_print: paged
+---
+##### Ural Federal University (IT Innovations in Business)
+### Full Name
+
+Type your answers and code below
+
+```{r}
+library (tidyverse)
+library(skimr)
+
+#Acquiring data
+data_url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank.zip"
+temporaryFile <- tempfile()
+download.file(data_url, temporaryFile)
+
+unzip (temporaryFile, "bank.csv")
+
+bankData = read_csv2("bank.csv")
+
+#Summarising
+
+bankData %>%
+  names()
+
+summary (bankData)
+
+#Skimming
+
+skimResults = bankData %>%
+  skim()
+
+skimResults %>%
+  select (skim_variable, n_missing)
+
+#Q1
+#How many clients subscribed?
+amountSubscribed = bankData %>%
+  select (y)%>%
+  filter(y=="yes")%>%
+  nrow()
+
+cat(amountSubscribed, " people have subscribed")
+
+
+#Q2
+#Which job category do majority of the bank's clients belong?
+jobs = bankData %>%
+  select (job)%>%
+  distinct(job)%>%
+  add_column(amount=0)
+
+jobNumber = nrow(jobs)
+
+for (i in 1:jobNumber) {
+  
+  query <- as.vector(jobs[i,1])
+  
+  jobs[i,2] = bankData %>%
+    select (job)%>%
+    filter (job %in% query)%>%
+    nrow()
+}
+
+jobs = arrange(jobs, desc(amount))
+
+top_job = unlist (jobs[1,1])
+cat ("The most popular job is: ",top_job )
+
+#Q3
+#How many unemployed people who were contacted in November have a housing loan?
+
+request3 = bankData %>%
+  filter (job =="unemployed", month=="nov", loan=="yes")%>%
+  nrow()
+
+cat (request3, " unemployed people with a housing loan contacted in November")
+
+#Q4
+# Which month recorded the least calls to retired clients?
+
+monthData = bankData %>%
+  select (month)%>%
+  distinct(month)%>%
+  add_column(amount=0)
+
+monthNumber = nrow(monthData)
+
+for (i in 1:monthNumber) {
+  
+  query <- as.vector(monthData[i,1])
+  
+  monthData[i,2] = bankData %>%
+    select (job, month)%>%
+    filter (job == "retired")%>%
+    filter (month %in% query)%>%
+    nrow()
+}
+
+monthData = arrange(monthData, amount)
+top_month = unlist (monthData[1,1])
+cat ("A month with the least calls to retired clients: ",top_month )
+
+#Q5
+#How many students are less than 25 years old?
+
+young = bankData %>%
+  filter (job=="student", age<25)%>%
+  nrow()
+
+cat(young, " students are less than 25 years old")
+
+#Q6 
+#Which job category did the bank perform the most contact campaigns?
+
+calls = bankData %>%
+  select (job, campaign)
+
+calls = aggregate (calls$campaign, by = list(calls$job), FUN=sum)
+
+calls=arrange(calls, desc(x))
+top_calls=unlist(calls[1,1])
+
+cat("People working in ", top_calls, " received the most campaign calls among all the jobs")
+
+#Q7
+#Which educational qualification does most client's whose campaign outcomes failed belong to?
+
+edu = bankData %>%
+  select (education, poutcome)%>%
+  filter (poutcome=="failure")
+
+edulist = edu %>%
+  select (education)%>%
+  distinct (education)%>%
+  add_column(amount=0)
+
+eduNumber = nrow(edulist)
+
+for (i in 1:eduNumber) {
+  
+  query <- as.vector(edulist[i,1])
+  
+  edulist[i,2] = edu %>%
+    filter (education %in% query)%>%
+    nrow()
+}
+
+edulist=arrange(edulist, desc(amount))
+top_edu=unlist(edu[1,1])
+
+cat("People with ", top_edu, " education had the most campaigns failed")
+
+
+```
+
